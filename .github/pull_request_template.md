@@ -18,6 +18,8 @@
 - [ ] All tests pass (run `go test ./...` or equivalent)
 - [ ] New code is covered by tests (if applicable)
 - [ ] Manually tested where relevant
+- [ ] Changelog updated
+- [ ] Devlog updated
 
 ## 📚 Notes (Optional)
 
