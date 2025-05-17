@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 -  add basic http server (#3) 
 
 ### Changed
-- 
+- update pr template #4) 
 
 ### Fixed
 - 
