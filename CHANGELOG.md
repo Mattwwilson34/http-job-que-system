@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 -  add pr template (#1) 
+-  add changelog (#2) 
+-  add basic http server (#3) 
 
 ### Changed
-- 
+- update pr template #4) 
 
 ### Fixed
 - 
