@@ -10,9 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
--  add pr template (#1) 
--  add changelog (#2) 
--  add basic http server (#3) 
+- add pr template (#1) 
+- add changelog (#2) 
+- add basic http server (#3) 
+- add logger (#5)
 
 ### Changed
 - update pr template #4) 
