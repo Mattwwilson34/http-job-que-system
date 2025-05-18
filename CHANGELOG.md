@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - add pr template (#1) 
 - add changelog (#2) 
 - add basic http server (#3) 
-- add logger #5)
+- add logger (#5)
 
 ### Changed
 - update pr template #4) 
