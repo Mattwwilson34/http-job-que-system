@@ -13,6 +13,58 @@ Go.
 
 ---
 
+Here is a combined and streamlined dev log entry that merges the two entries while preserving all key points and reducing redundancy:
+
+---
+
+## 📅 [2025-05-23]
+
+### What I worked on:
+
+* Refined understanding of Go's `net/http` package, including both server-side request handling and client-side testing.
+* Explored differences between `http.Client{}` and `&http.Client{}`—why the pointer form is preferred for managing internal state like connection pools.
+* Built and tested HTTP route handlers with method restrictions.
+* Created client-side test code using `http.NewRequest()` and `client.Do()` to allow testing of all HTTP methods, beyond just `GET` and `POST`.
+* Debugged test failures related to `DELETE` requests, focusing on the interaction between client tests and server error handling.
+* Improved server log messaging and evaluated proper status codes and error responses.
+
+### Problems or blockers:
+
+* Tests for `DELETE` requests failed due to the server crashing (`log.Fatal`) when decoding an empty JSON body—preventing status code validation.
+* Misinterpreted test failure as a `t.Errorf` for unexpected status codes, when it was actually a `t.Fatalf` caused by a transport error (due to server termination).
+* Initial confusion around method constants and the separation between `http.NewRequest()` vs convenience methods (`http.Get()`, etc.).
+
+### Decisions made and why:
+
+* **HTTP Client Instantiation**: Use `&http.Client{}` to enable reusability and proper management of internal state, especially for custom requests in tests.
+
+* **Status Codes**:
+
+  * Use `http.StatusMethodNotAllowed` (405) for disallowed methods like `DELETE` when not supported.
+  * Use `http.Error` for client errors (e.g., malformed JSON) and avoid `log.Fatal`, which terminates the server.
+
+* **Testing Improvements**:
+
+  * Prefer `http.NewRequest()` with a custom client in tests for flexibility.
+  * Ensure `defer resp.Body.Close()` is always called to prevent resource leaks.
+  * Explicitly assert for correct status codes rather than just checking for `!= http.StatusOK`.
+
+### What I learned:
+
+* **`http.Client` Design**: It’s idiomatic in Go to use the pointer form because most methods operate on `*Client`, and the struct holds shared state.
+* **Fatal vs Non-Fatal Logging**: `log.Fatal` exits the server and leads to test transport errors; `http.Error` is the proper way to return meaningful HTTP responses.
+* **Test Debugging Tactics**: Recognizing the distinction between transport-level failures and status code mismatches is essential for diagnosing test issues.
+* **Go HTTP Anatomy**: Learned how to combine server and client concepts—method constants, request creation, and response writing—for robust request handling.
+
+### Next steps:
+
+* Ensure all disallowed methods return 405, not 403, aligning with HTTP semantics.
+* Expand the test suite to cover all HTTP methods with clear expectations for each.
+* Add JSON tags to the `Message` struct and validate request body parsing for `POST` requests.
+* Review and improve all logging and error response patterns for clarity and maintainability.
+
+---
+
 ## 📅 [2025-05-22]
 
 ### What I worked on:
