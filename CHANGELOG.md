@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - update pr template #4) 
+- update server handler from get to post (#6)
 
 ### Fixed
 - 
