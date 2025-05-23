@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"http-job-que-system/logger"
 	"net/http"
+	"slices"
 )
 
 type Message struct {
@@ -29,7 +30,7 @@ func Start() {
 	logger.Log.Println(startupMsg)
 	fmt.Println(startupMsg)
 
-	http.HandleFunc("/foo", fooHandler)
+	http.HandleFunc("/", jobHandler)
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
@@ -37,13 +38,48 @@ func Start() {
 	}
 }
 
-func fooHandler(w http.ResponseWriter, r *http.Request) {
-	var m Message
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&m)
-	if err != nil {
-		fmt.Println("Decode error:", err) // Add this before Fatal
-		logger.Log.Fatal("Error decoding request body json")
+// Main entry point to our job que system
+func jobHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Reject invalid http methods
+	notAllowedMethods := []string{
+		http.MethodGet,
+		http.MethodPatch,
+		http.MethodPut,
+		http.MethodDelete,
 	}
-	fmt.Println("Message:", m)
+	if slices.Contains(notAllowedMethods, r.Method) {
+		responseStatus := http.StatusMethodNotAllowed
+		responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
+		http.Error(w, responseBody, responseStatus)
+
+		logMessage := fmt.Sprintf(
+			"jobHandler: Disallowed HTTP method '%s' for path '%s' from client '%s'. Responded with %d.",
+			r.Method,
+			r.URL.Path,
+			r.RemoteAddr,
+			responseStatus,
+		)
+		logger.Log.Println(logMessage)
+		fmt.Println(logMessage)
+
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		var m Message
+		dec := json.NewDecoder(r.Body)
+		err := dec.Decode(&m)
+		if err != nil {
+			fmt.Println("Decode error:", err) // Add this before Fatal
+			logger.Log.Fatal("Error decoding request body json")
+		}
+		fmt.Println("Message:", m)
+	}
+
+	// DEFAULT: return forbidden status
+	responseStatus := http.StatusForbidden
+	responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
+	http.Error(w, responseBody, responseStatus)
+
 }
