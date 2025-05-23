@@ -4,10 +4,18 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"http-job-que-system/logger"
 	"net/http"
 )
+
+type Message struct {
+	Id   int
+	Name string
+	Body string
+	Time int64
+}
 
 // Start launches the HTTP server on port 8080.
 // It logs a startup message using the global logger and begins listening
@@ -16,14 +24,26 @@ import (
 //
 // This function should be called only after the logger has been initialized.
 func Start() {
-	var log = logger.Log
 	startupMsg := "Server listening on port 8080"
 
-	log.Println(startupMsg)
+	logger.Log.Println(startupMsg)
 	fmt.Println(startupMsg)
+
+	http.HandleFunc("/foo", fooHandler)
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-		log.Fatal("Server failed to start:", err)
+		logger.Log.Fatal("Server failed to start:", err)
 	}
+}
+
+func fooHandler(w http.ResponseWriter, r *http.Request) {
+	var m Message
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&m)
+	if err != nil {
+		fmt.Println("Decode error:", err) // Add this before Fatal
+		logger.Log.Fatal("Error decoding request body json")
+	}
+	fmt.Println("Message:", m)
 }
