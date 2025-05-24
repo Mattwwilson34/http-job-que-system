@@ -12,10 +12,36 @@ experiments, and reflections while building an HTTP-based job queue system in
 Go.
 
 ---
+## 📅 [2025-05-24]
 
-Here is a combined and streamlined dev log entry that merges the two entries while preserving all key points and reducing redundancy:
+### What I worked on:
+- Fixed HTTP handler flow control bug where POST requests fell through to 403 responses
+- Replaced server-crashing `log.Fatal` calls with proper HTTP error responses
+- Learned Go's string vs byte slice differences for HTTP response writing
+- Created structured JSON response types for consistent API responses
+- Debugged HTTP response header/body ordering issues
 
----
+### Problems or blockers:
+- Missing `return` statements in POST handlers caused execution to continue to default 403
+- `ResponseWriter.Write()` expects `[]byte`, not `string` - required type conversion
+- Tried to capture JSON data from `json.NewEncoder().Encode()` which returns error, not data
+- Set headers after body was already written (wrong HTTP order)
+
+### Decisions made and why:
+- Added explicit `return` statements after all response paths - Go requires explicit control flow
+- Used `http.StatusBadRequest` for JSON parse errors instead of crashing server
+- Chose `fmt.Fprint()` over `ResponseWriter.Write()` to avoid manual string-to-bytes conversion
+
+### What I learned:
+- Go's explicit control flow - blocks don't auto-return from functions
+- HTTP response order: headers → status → body (strict protocol requirement)
+- `json.NewEncoder(w).Encode()` writes directly to response, `json.Marshal()` returns bytes
+- String/byte slice distinction reflects network communication happening in bytes
+
+### Next steps:
+- Add proper Content-Type headers for JSON responses
+- Implement input validation for Job struct
+- Begin actual job queue storage logic
 
 ## 📅 [2025-05-23]
 
