@@ -11,11 +11,16 @@ import (
 	"slices"
 )
 
-type Message struct {
+type Job struct {
 	Id   int
 	Name string
 	Body string
 	Time int64
+}
+
+type CreatedJobResponse struct {
+	Message    string
+	CreatedJob Job
 }
 
 // Start launches the HTTP server on port 8080.
@@ -67,11 +72,11 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		var clientMsg Message
+		var clientJob Job
 
 		// Parse response body
 		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(&clientMsg)
+		err := dec.Decode(&clientJob)
 		if err != nil {
 			errMsg := "Error decoding JSON from request body"
 			fmt.Println(errMsg, err)
@@ -83,16 +88,15 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Parse successful, process client job
+		// TODO: process job
 
 		// Respond to client post job processing
-		responseStatus := http.StatusCreated
-		responseBody := fmt.Sprintf(
-			"%d %s %#v",
-			responseStatus,
-			http.StatusText(responseStatus),
-			clientMsg,
-		)
-		w.WriteHeader(responseStatus)
+		createdJobResponse := CreatedJobResponse{"Job creation successful", clientJob}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+
+		responseBody := json.NewEncoder(w).Encode(createdJobResponse)
 		_, err = fmt.Fprint(w, responseBody)
 		if err != nil {
 			errMsg := "Error writing to response body"
@@ -100,7 +104,8 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 			logger.Log.Println(errMsg)
 		}
 
-		fmt.Println(responseBody)
+		logData, _ := json.Marshal(createdJobResponse)
+		fmt.Printf("Response sent: %s\n", string(logData))
 		return
 	}
 
