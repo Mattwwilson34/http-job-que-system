@@ -53,7 +53,7 @@ func TestFooHandler(t *testing.T) {
 			t.Fatalf("Request failed: %v", err)
 		}
 
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusCreated {
 			t.Errorf("Unexpected status: %d", resp.StatusCode)
 		}
 
