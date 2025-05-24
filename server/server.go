@@ -67,14 +67,40 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		var m Message
+		var clientMsg Message
+
+		// Parse response body
 		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(&m)
+		err := dec.Decode(&clientMsg)
 		if err != nil {
-			fmt.Println("Decode error:", err) // Add this before Fatal
-			logger.Log.Fatal("Error decoding request body json")
+			errMsg := "Error decoding JSON from request body"
+			fmt.Println(errMsg, err)
+			logger.Log.Println(errMsg)
+			responseStatus := http.StatusBadRequest
+			responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
+			http.Error(w, responseBody, responseStatus)
+			return
 		}
-		fmt.Println("Message:", m)
+
+		// Parse successful, process client job
+
+		// Respond to client post job processing
+		responseStatus := http.StatusCreated
+		responseBody := fmt.Sprintf(
+			"%d %s %#v",
+			responseStatus,
+			http.StatusText(responseStatus),
+			clientMsg,
+		)
+		w.WriteHeader(responseStatus)
+		_, err = fmt.Fprint(w, responseBody)
+		if err != nil {
+			errMsg := "Error writing to response body"
+			fmt.Println(errMsg, err)
+			logger.Log.Println(errMsg)
+		}
+
+		fmt.Println(responseBody)
 		return
 	}
 
