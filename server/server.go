@@ -75,11 +75,11 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 			logger.Log.Fatal("Error decoding request body json")
 		}
 		fmt.Println("Message:", m)
+		return
 	}
 
 	// DEFAULT: return forbidden status
 	responseStatus := http.StatusForbidden
 	responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
 	http.Error(w, responseBody, responseStatus)
-
 }
