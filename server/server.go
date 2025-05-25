@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"http-job-que-system/logger"
 	"net/http"
-	"slices"
 )
 
 type Job struct {
@@ -45,31 +44,7 @@ func Start() {
 
 // Main entry point to our job que system
 func jobHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Reject invalid http methods
-	notAllowedMethods := []string{
-		http.MethodGet,
-		http.MethodPatch,
-		http.MethodPut,
-		http.MethodDelete,
-	}
-	if slices.Contains(notAllowedMethods, r.Method) {
-		responseStatus := http.StatusMethodNotAllowed
-		responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
-		http.Error(w, responseBody, responseStatus)
-
-		logMessage := fmt.Sprintf(
-			"jobHandler: Disallowed HTTP method '%s' for path '%s' from client '%s'. Responded with %d.",
-			r.Method,
-			r.URL.Path,
-			r.RemoteAddr,
-			responseStatus,
-		)
-		logger.Log.Println(logMessage)
-		fmt.Println(logMessage)
-
-		return
-	}
+	rejectNonPostMethods(w, r)
 
 	if r.Method == http.MethodPost {
 		var clientJob Job
@@ -113,4 +88,24 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 	responseStatus := http.StatusForbidden
 	responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
 	http.Error(w, responseBody, responseStatus)
+}
+
+func rejectNonPostMethods(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		return
+	}
+
+	responseStatus := http.StatusMethodNotAllowed
+	responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
+	http.Error(w, responseBody, responseStatus)
+
+	logMessage := fmt.Sprintf(
+		"jobHandler: Disallowed HTTP method '%s' for path '%s' from client '%s'. Responded with %d.",
+		r.Method,
+		r.URL.Path,
+		r.RemoteAddr,
+		responseStatus,
+	)
+	logger.Log.Println(logMessage)
+	fmt.Println(logMessage)
 }
