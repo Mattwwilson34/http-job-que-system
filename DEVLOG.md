@@ -12,6 +12,44 @@ experiments, and reflections while building an HTTP-based job queue system in
 Go.
 
 ---
+
+## 📅 [2025-05-27]
+
+### What I worked on:
+- Added input validation for JobRequest struct after JSON parsing using Go standard library only
+- Fixed critical bug where `json.NewEncoder(w).Encode()` + `fmt.Fprint(w, responseBody)` was appending "nil" to HTTP responses
+- Updated timestamp format from `time.DateTime` to `time.RFC3339` for proper ISO 8601 compliance
+- Added proper JSON struct tags to all response types for consistent API field naming
+- Refined HTTP handler control flow to eliminate unreachable code paths
+
+### Problems or blockers:
+- Go standard library doesn't include built-in UUID generation or struct validation
+- `json.NewEncoder(w).Encode()` returns an error (not the JSON string), so assigning it to a variable and printing that variable writes "nil" to the response
+- Missing JSON struct tags caused inconsistent field naming in API responses
+- Unreachable fallback code in handler due to early returns in validation
+
+### Decisions made and why:
+- **Standard Library Only**: Restricted project to Go standard library for learning purposes, using manual validation instead of `go-playground/validator`
+- **Manual ID Generation**: Created `GenerateRandomID()` using `crypto/rand` and `hex.EncodeToString()` instead of proper UUID library
+- **Zero Value Validation**: Used Go's zero value behavior (empty strings, 0 for ints) to detect missing required fields
+- **ISO 8601 Timestamps**: Switched to `time.RFC3339` format for better API standards compliance
+
+### What I learned:
+- **JSON Unmarshaling Behavior**: Go sets missing JSON fields to their type's zero value (string→"", int→0) rather than throwing errors
+- **HTTP Response Writing**: `json.NewEncoder(w).Encode()` writes directly to the ResponseWriter and returns only an error, not the encoded data
+- **Zero Values**: Understanding Go's zero value system is crucial for validation - you check for zero values to detect missing fields
+- **Pointer vs Value for Validation**: Can use pointer fields (`*string`, `*int`) to distinguish between "not provided" (nil) and "provided but zero value"
+- **Control Flow**: Go requires explicit `return` statements - execution continues unless explicitly stopped
+- **Response Order**: HTTP responses require specific order: headers → status code → body
+
+### Next steps:
+- Design the actual job queue data structure (likely using channels)
+- Implement worker pool with goroutines for concurrent job processing
+- Add job status tracking and retrieval endpoints
+- Consider using `sync.Map` or mutex-protected map for thread-safe job storage
+
+---
+
 ## 📅 [2025-05-24]
 
 ### What I worked on:
