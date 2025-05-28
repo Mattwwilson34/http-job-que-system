@@ -4,22 +4,36 @@
 package server
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"http-job-que-system/logger"
 	"net/http"
+	"time"
 )
 
 type Job struct {
-	Id   int
-	Name string
-	Body string
-	Time int64
+	Id              string `json:"id"`
+	Name            string `json:"name"`
+	Body            string `json:"body"`
+	CreatedDateTime string `json:"createdDateTime"`
+}
+
+type JobRequest struct {
+	Name string `json:"name"`
+	Body string `json:"body"`
 }
 
 type CreatedJobResponse struct {
-	Message    string
-	CreatedJob Job
+	Message    string `json:"message"`
+	CreatedJob Job    `json:"createdJob"`
+}
+
+type ErrorResponse struct {
+	Error   string `json:"error"`
+	Message string `json:"message"`
+	Status  int    `json:"status"`
 }
 
 // Start launches the HTTP server on port 8080.
@@ -44,43 +58,48 @@ func Start() {
 
 // Main entry point to our job que system
 func jobHandler(w http.ResponseWriter, r *http.Request) {
-	rejectNonPostMethods(w, r)
+	err := validateHttpMethod(r)
+	if err != nil {
+		errorMsg := fmt.Sprintf("Http Method %s not allowed", r.Method)
+		rejectRequest(w, r, http.StatusMethodNotAllowed, "jobHandler", errorMsg)
+		return
+	}
 
 	if r.Method == http.MethodPost {
-		var clientJob Job
+		var jobRequest JobRequest
 
 		// Parse response body
 		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(&clientJob)
+		err := dec.Decode(&jobRequest)
 		if err != nil {
-			errMsg := "Error decoding JSON from request body"
-			fmt.Println(errMsg, err)
-			logger.Log.Println(errMsg)
-			responseStatus := http.StatusBadRequest
-			responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
-			http.Error(w, responseBody, responseStatus)
+			errorMsg := "Error decoding JSON Job from request body"
+			rejectRequest(w, r, http.StatusBadRequest, "jobHandler", errorMsg)
 			return
 		}
 
-		// Parse successful, process client job
-		// TODO: process job
-
-		// Respond to client post job processing
-		createdJobResponse := CreatedJobResponse{"Job creation successful", clientJob}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-
-		responseBody := json.NewEncoder(w).Encode(createdJobResponse)
-		_, err = fmt.Fprint(w, responseBody)
+		// Validate JobRequest payload
+		err = validateJobRequest(&jobRequest)
 		if err != nil {
-			errMsg := "Error writing to response body"
-			fmt.Println(errMsg, err)
-			logger.Log.Println(errMsg)
+			errorMsg := fmt.Sprintf("Job request is not valid, %s", err)
+			rejectRequest(w, r, http.StatusBadRequest, "jobHandler", errorMsg)
+			return
 		}
 
-		logData, _ := json.Marshal(createdJobResponse)
-		fmt.Printf("Response sent: %s\n", string(logData))
+		// Generate Job Id
+		jobId, err := GenerateRandomID()
+		if err != nil {
+			errorMsg := fmt.Sprintf("Failed to create Job UUID, %s", err)
+			rejectRequest(w, r, http.StatusInternalServerError, "jobHandler", errorMsg)
+			return
+		}
+
+		// Get Created DateTime
+		createdDateTime := time.Now().UTC().Format(time.RFC3339)
+
+		// Create Job
+		job := Job{jobId, jobRequest.Name, jobRequest.Body, createdDateTime}
+
+		sendJobCreatedResponse(w, job)
 		return
 	}
 
@@ -90,22 +109,86 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, responseBody, responseStatus)
 }
 
-func rejectNonPostMethods(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		return
+// Validate a Job
+func validateJobRequest(job *JobRequest) error {
+	if job.Name == "" {
+		return fmt.Errorf("name is a required job field")
+	}
+	if job.Body == "" {
+		return fmt.Errorf("body is a required job field")
+	}
+	return nil
+}
+
+// Throw error if not  POST request
+func validateHttpMethod(r *http.Request) error {
+	if r.Method != http.MethodPost {
+		return fmt.Errorf("method %s not allowed", r.Method)
 	}
 
-	responseStatus := http.StatusMethodNotAllowed
-	responseBody := fmt.Sprintf("%d %s", responseStatus, http.StatusText(responseStatus))
-	http.Error(w, responseBody, responseStatus)
+	return nil
+}
 
-	logMessage := fmt.Sprintf(
-		"jobHandler: Disallowed HTTP method '%s' for path '%s' from client '%s'. Responded with %d.",
-		r.Method,
-		r.URL.Path,
-		r.RemoteAddr,
-		responseStatus,
-	)
-	logger.Log.Println(logMessage)
-	fmt.Println(logMessage)
+// Respond to users with successful job creation message
+func sendJobCreatedResponse(w http.ResponseWriter, clientJob Job) {
+	createdJobResponse := CreatedJobResponse{"Job creation successful", clientJob}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	err := json.NewEncoder(w).Encode(createdJobResponse)
+	if err != nil {
+		errMsg := "Error writing to response body"
+		fmt.Println(errMsg, err)
+		logger.Log.Println(errMsg)
+	}
+
+	logData, _ := json.Marshal(createdJobResponse)
+	fmt.Printf("Response sent: %s\n", string(logData))
+
+}
+
+// Reject HTTP request if Method is not POST
+func rejectRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+	responseStatus int,
+	caller string,
+	errorMessage string,
+) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(responseStatus)
+
+	errorResponse := ErrorResponse{
+		Error:   http.StatusText(responseStatus),
+		Message: errorMessage,
+		Status:  http.StatusMethodNotAllowed,
+	}
+
+	err := json.NewEncoder(w).Encode(errorResponse)
+	if err != nil {
+		logger.Log.Println("rejectRequest: Error encoding ErrorResponse to JSON", err)
+	}
+
+	logInput := logger.HttpLogMsg{
+		FuncName:   caller,
+		Method:     r.Method,
+		UrlPath:    r.URL.Path,
+		RemoteAddr: r.RemoteAddr,
+		Status:     responseStatus,
+		Message:    errorMessage,
+	}
+
+	logger.Log.Println(logInput)
+	fmt.Println(logInput)
+}
+
+// Generate a random uuid
+func GenerateRandomID() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
