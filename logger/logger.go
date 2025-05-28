@@ -4,6 +4,7 @@
 package logger
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +14,16 @@ const logFileName = "log.txt"
 
 // Log is the globally accessible logger instance. It is initialized by calling InitLogger.
 var Log *log.Logger
+
+// Log structure for HTTP based log entries
+type HttpLogMsg struct {
+	FuncName   string
+	Method     string
+	UrlPath    string
+	RemoteAddr string
+	Status     int
+	Message    string
+}
 
 // InitLogger initializes the global logger to write log output to a file named "log.txt"
 // in the application's current working directory. If initialization succeeds, it returns nil;
@@ -34,4 +45,15 @@ func InitLogger() error {
 	Log = log.New(file, "APP: ", log.Ldate|log.Ltime|log.Lshortfile)
 	Log.Println("Logger initialized")
 	return nil
+}
+
+// Format HttpLogMsg string output
+func (h HttpLogMsg) String() string {
+	return fmt.Sprintf("%s: %s %s from %s -> %d (%s)",
+		h.FuncName,
+		h.Method,
+		h.UrlPath,
+		h.RemoteAddr,
+		h.Status,
+		h.Message)
 }
