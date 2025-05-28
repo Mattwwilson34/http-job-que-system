@@ -39,8 +39,8 @@ func TestFooHandler(t *testing.T) {
 
 	// Why when we declare our json body outside the loop do we only get 1 post
 	// response body
-	for i := range 10 {
-		m := Job{i, "Alice", "Hello", 1294706395881547000}
+	for range 10 {
+		m := JobRequest{"Alice", "Hello"}
 		b, err := json.Marshal(m)
 		if err != nil {
 			t.Fatalf("Failed to marshal JSON")
@@ -56,6 +56,16 @@ func TestFooHandler(t *testing.T) {
 		if resp.StatusCode != http.StatusCreated {
 			t.Errorf("Unexpected status: %d", resp.StatusCode)
 		}
+
+		var createdJobResponse CreatedJobResponse
+
+		dec := json.NewDecoder(resp.Body)
+		err = dec.Decode(&createdJobResponse)
+		if err != nil {
+			t.Errorf("Failed to parse request body")
+		}
+
+		t.Logf("Parsed response: %+v", createdJobResponse)
 
 		resp.Body.Close()
 	}
