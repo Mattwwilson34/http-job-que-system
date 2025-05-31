@@ -4,11 +4,10 @@
 package server
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"http-job-que-system/logger"
+	"http-job-que-system/utils"
 	"net/http"
 	"time"
 )
@@ -86,7 +85,7 @@ func jobHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Generate Job Id
-		jobId, err := GenerateRandomID()
+		jobId, err := uuid.GenerateUUID()
 		if err != nil {
 			errorMsg := fmt.Sprintf("Failed to create Job UUID, %s", err)
 			rejectRequest(w, r, http.StatusInternalServerError, "jobHandler", errorMsg)
@@ -181,14 +180,4 @@ func rejectRequest(
 
 	logger.Log.Println(logInput)
 	fmt.Println(logInput)
-}
-
-// Generate a random uuid
-func GenerateRandomID() (string, error) {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
