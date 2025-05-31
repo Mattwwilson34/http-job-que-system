@@ -12,6 +12,31 @@ experiments, and reflections while building an HTTP-based job queue system in
 Go.
 
 ---
+## 📅 [2025-05-31]
+
+### What I worked on:
+Built a UUID v4 generator in Go using only the standard library. Implemented random byte generation, hex formatting with proper dash placement, and UUID specification compliance with version/variant bits.
+
+### Problems or blockers:
+- Confused about Go's error handling - `rand.Read()` can return errors AND panic, linter flagged unchecked returns
+- Initially tried replacing characters instead of inserting dashes, overwrote UUID data
+- Buffer sizing errors (used 18 bytes instead of 36) and position tracking issues in loops
+- Struggled with slice boundaries when implementing segment-based formatting
+
+### Decisions made and why:
+- Kept defensive byte count validation despite `crypto/rand.Read()` guarantees for safety and clarity
+- Switched from repetitive code to loop-based formatting using segment lengths `[4, 2, 2, 2, 6]` for maintainability
+- Implemented full UUID v4 compliance rather than just random hex to learn bit manipulation
+
+### What I learned:
+- Started understanding Go's dual error patterns (recoverable vs unrecoverable failures)
+- Explored data vs display representation (16 bytes → 32 hex chars + 4 dashes)
+- Began learning bit masking - using AND to clear bits, OR to set bits
+- Investigated buffer management and position tracking for formatted string building
+- Started working with UUID v4 spec requirements (version bits, variant bits)
+
+### Next steps:
+- Design the actual job queue data structure 
 
 ## 📅 [2025-05-27]
 
@@ -43,10 +68,7 @@ Go.
 - **Response Order**: HTTP responses require specific order: headers → status code → body
 
 ### Next steps:
-- Design the actual job queue data structure (likely using channels)
-- Implement worker pool with goroutines for concurrent job processing
-- Add job status tracking and retrieval endpoints
-- Consider using `sync.Map` or mutex-protected map for thread-safe job storage
+- Design the actual job queue data structure 
 
 ---
 
