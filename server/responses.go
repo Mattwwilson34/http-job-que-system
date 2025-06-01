@@ -7,9 +7,8 @@ import (
 	"net/http"
 )
 
-// Respond to client with successful job creation message. Return true if the
-// response was sent successfully and false on failure.
-func SendJobCreatedResponse(w http.ResponseWriter, clientJob Job) bool {
+// Respond to client with successful job creation message. Returns an error if json encoding fails
+func SendJobCreatedResponse(w http.ResponseWriter, clientJob Job) error {
 	createdJobResponse := CreatedJobResponse{"Job creation successful", clientJob}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -17,15 +16,12 @@ func SendJobCreatedResponse(w http.ResponseWriter, clientJob Job) bool {
 
 	err := json.NewEncoder(w).Encode(createdJobResponse)
 	if err != nil {
-		errMsg := "Error writing to response body"
-		fmt.Println(errMsg, err)
-		logger.Log.Println(errMsg)
-		return false
+		return fmt.Errorf("Error writing to response body, %s", err.Error())
 	}
 
 	logData, _ := json.Marshal(createdJobResponse)
 	fmt.Printf("Response sent: %s\n", string(logData))
-	return true
+	return nil
 }
 
 // Reject client HTTP request with custom error message
@@ -34,14 +30,15 @@ func RejectRequest(
 	r *http.Request,
 	responseStatus int,
 	caller string,
-	errorMessage string,
+	clientMessage string,
+	errorForLogs error,
 ) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(responseStatus)
 
 	errorResponse := ErrorResponse{
 		Error:   http.StatusText(responseStatus),
-		Message: errorMessage,
+		Message: clientMessage,
 		Status:  http.StatusMethodNotAllowed,
 	}
 
@@ -56,7 +53,7 @@ func RejectRequest(
 		UrlPath:    r.URL.Path,
 		RemoteAddr: r.RemoteAddr,
 		Status:     responseStatus,
-		Message:    errorMessage,
+		Message:    errorForLogs.Error(),
 	}
 
 	logger.Log.Println(logInput)

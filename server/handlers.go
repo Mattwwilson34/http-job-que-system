@@ -2,7 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
+	"http-job-que-system/logger"
 	"http-job-que-system/utils"
 	"net/http"
 	"time"
@@ -20,6 +21,7 @@ func HandleJobRequest(w http.ResponseWriter, r *http.Request) {
 			http.StatusMethodNotAllowed,
 			"handleMethodNotAllowed",
 			http.StatusText(http.StatusMethodNotAllowed),
+			errors.New(http.StatusText(http.StatusMethodNotAllowed)),
 		)
 	}
 
@@ -27,40 +29,93 @@ func HandleJobRequest(w http.ResponseWriter, r *http.Request) {
 
 // Attempts to create a job from the client request, if it fails at any step
 // then the client request is rejected
-func handleJobCreation(w http.ResponseWriter, r *http.Request) bool {
+func handleJobCreation(w http.ResponseWriter, r *http.Request) {
+	job, err := createJobFromRequest(r)
+
+	if err != nil {
+		var clientErr ClientError
+		var serverErr ServerError
+
+		switch {
+		case errors.As(err, &clientErr):
+			RejectRequest(w, r, http.StatusBadRequest, "handleJobCreation", err.Error(), err)
+
+		case errors.As(err, &serverErr):
+			RejectRequest(
+				w,
+				r,
+				http.StatusInternalServerError,
+				"handleJobCreation",
+				http.StatusText(http.StatusInternalServerError),
+				err,
+			)
+
+		default:
+			RejectRequest(
+				w,
+				r,
+				http.StatusInternalServerError,
+				"handleJobCreation",
+				"Unknown error",
+				err,
+			)
+		}
+		return
+	}
+
+	err = SendJobCreatedResponse(w, job)
+	if err != nil {
+		logger.Log.Println(
+			"SendJobCreatedResponse: failed to send successful job creation response to client",
+			err,
+		)
+	}
+}
+
+// Create a job from a client request
+func createJobFromRequest(r *http.Request) (Job, error) {
 	var jobRequest JobRequest
 
-	// Parse response body
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&jobRequest)
-	if err != nil {
-		errorMsg := "Error decoding JSON Job from request body"
-		RejectRequest(w, r, http.StatusBadRequest, "jobHandler", errorMsg)
-		return false
+	// Parse request
+	if err := json.NewDecoder(r.Body).Decode(&jobRequest); err != nil {
+		return Job{}, ValidationError{
+			Field:   "request_body",
+			Message: "invalid JSON: " + err.Error(),
+		}
 	}
 
-	// Validate JobRequest payload
-	err = ValidateJobRequest(&jobRequest)
-	if err != nil {
-		errorMsg := fmt.Sprintf("Job request is not valid, %s", err)
-		RejectRequest(w, r, http.StatusBadRequest, "jobHandler", errorMsg)
-		return false
+	// Validate parsed request body is valid
+	if err := ValidateJobRequest(&jobRequest); err != nil {
+		return Job{}, ValidationError{
+			Field:   "payload",
+			Message: "validation failed: " + err.Error(),
+		}
 	}
 
-	// Generate Job Id
-	jobId, err := uuid.GenerateUUID()
+	// Create job
+	job, err := createJob(&jobRequest)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Failed to create Job UUID, %s", err)
-		RejectRequest(w, r, http.StatusInternalServerError, "jobHandler", errorMsg)
-		return false
+		return Job{}, InternalError{
+			Operation: "job_creation",
+			Cause:     err,
+		}
 	}
 
-	// Get Created DateTime
-	createdDateTime := time.Now().UTC().Format(time.RFC3339)
+	logger.Log.Printf("createJobFromRequest: job (%s) created with id:(%s)", job.Name, job.Id)
+	return job, nil
+}
 
-	// Create Job
-	job := Job{jobId, jobRequest.Name, jobRequest.Body, createdDateTime}
+// Create and return a job or return an error
+func createJob(req *JobRequest) (Job, error) {
+	jobID, err := utils.GenerateUUID()
+	if err != nil {
+		return Job{}, err
+	}
 
-	SendJobCreatedResponse(w, job)
-	return true
+	return Job{
+		Id:              jobID,
+		Name:            req.Name,
+		Body:            req.Body,
+		CreatedDateTime: time.Now().UTC().Format(time.RFC3339),
+	}, nil
 }
