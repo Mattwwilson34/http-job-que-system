@@ -12,6 +12,40 @@ experiments, and reflections while building an HTTP-based job queue system in
 Go.
 
 ---
+
+## 📅 [DATE]
+### What I worked on:
+### Problems or blockers:
+### Decisions made and why:
+### What I learned:
+### Next steps:
+
+## 📅 [2025-06-01]
+
+### What I worked on:
+Refactored the HTTP job handler architecture to implement proper error handling patterns and separation of concerns. Restructured code into modular files (handlers.go, types.go, validation.go, responses.go) and implemented interface-based error categorization with distinct client vs server error handling.
+
+### Problems or blockers:
+- Struggled with Go's error interface implementation - needed to understand why custom error types require Error() string methods to satisfy the error interface
+- Hit linter warnings with fmt.Errorf() when passing non-format strings, learned distinction between fmt.Errorf() for formatted strings vs errors.New() for plain strings
+- Discovered security issue where internal server errors were leaking implementation details to clients through error messages
+
+### Decisions made and why:
+- Implemented ClientError and ServerError interfaces using errors.As() pattern for type-safe error handling rather than string matching
+- Separated client-facing error messages from detailed logging - client gets generic "Internal Server Error" while logs contain full error details for debugging
+- Modified RejectRequest to accept both client message and detailed error for logging
+- Added logging at job creation success point to track successful operations
+
+### What I learned:
+- Deepened understanding of Go's error interface and how any type with Error() string method automatically implements error
+- Learned about errors.As() and how it checks if errors implement specific interfaces, including wrapped errors
+- Explored production security practices around error message disclosure to clients
+- Understood separation of concerns between HTTP response handling and business logic
+- Started working with Go's interface system for behavior-based type checking
+
+### Next steps:
+- Design the job queue data structure 
+
 ## 📅 [2025-05-31]
 
 ### What I worked on:
@@ -36,7 +70,7 @@ Built a UUID v4 generator in Go using only the standard library. Implemented ran
 - Started working with UUID v4 spec requirements (version bits, variant bits)
 
 ### Next steps:
-- Design the actual job queue data structure 
+- Design the job queue data structure 
 
 ## 📅 [2025-05-27]
 
