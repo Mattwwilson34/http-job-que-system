@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"http-job-que-system/logger"
+	"http-job-que-system/types"
 	"http-job-que-system/utils"
 	"net/http"
 	"time"
@@ -73,12 +74,12 @@ func handleJobCreation(w http.ResponseWriter, r *http.Request) {
 }
 
 // Create a job from a client request
-func createJobFromRequest(r *http.Request) (Job, error) {
+func createJobFromRequest(r *http.Request) (types.Job, error) {
 	var jobRequest JobRequest
 
 	// Parse request
 	if err := json.NewDecoder(r.Body).Decode(&jobRequest); err != nil {
-		return Job{}, ValidationError{
+		return types.Job{}, ValidationError{
 			Field:   "request_body",
 			Message: "invalid JSON: " + err.Error(),
 		}
@@ -86,7 +87,7 @@ func createJobFromRequest(r *http.Request) (Job, error) {
 
 	// Validate parsed request body is valid
 	if err := ValidateJobRequest(&jobRequest); err != nil {
-		return Job{}, ValidationError{
+		return types.Job{}, ValidationError{
 			Field:   "payload",
 			Message: "validation failed: " + err.Error(),
 		}
@@ -95,7 +96,7 @@ func createJobFromRequest(r *http.Request) (Job, error) {
 	// Create job
 	job, err := createJob(&jobRequest)
 	if err != nil {
-		return Job{}, InternalError{
+		return types.Job{}, InternalError{
 			Operation: "job_creation",
 			Cause:     err,
 		}
@@ -106,13 +107,13 @@ func createJobFromRequest(r *http.Request) (Job, error) {
 }
 
 // Create and return a job or return an error
-func createJob(req *JobRequest) (Job, error) {
+func createJob(req *JobRequest) (types.Job, error) {
 	jobID, err := utils.GenerateUUID()
 	if err != nil {
-		return Job{}, err
+		return types.Job{}, err
 	}
 
-	return Job{
+	return types.Job{
 		Id:              jobID,
 		Name:            req.Name,
 		Body:            req.Body,

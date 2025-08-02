@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"http-job-que-system/logger"
+	"http-job-que-system/types"
 	"net/http"
 )
 
 // Respond to client with successful job creation message. Returns an error if json encoding fails
-func SendJobCreatedResponse(w http.ResponseWriter, clientJob Job) error {
+func SendJobCreatedResponse(w http.ResponseWriter, clientJob types.Job) error {
 	createdJobResponse := CreatedJobResponse{"Job creation successful", clientJob}
 
 	w.Header().Set("Content-Type", "application/json")
