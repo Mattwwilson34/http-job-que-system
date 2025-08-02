@@ -26,6 +26,8 @@ Go.
 - Resolved circular dependency issue by elevating Job struct to shared types package
 - Designed doubly linked list structure with proper pointer relationships
 - Learned Go method receiver syntax and struct organization patterns
+- **Implemented `Append()` and `Prepend()` methods** for doubly linked list with proper bidirectional linking
+- **Created comprehensive unit tests** using Go testing idioms and subtests
 
 ### Problems or blockers:
 - No current blockers
@@ -34,15 +36,21 @@ Go.
 - **Created separate `types` package**: Moved Job struct from `server` to `types` package to prevent circular imports between `utils` and `server` packages
 - **Used pointer receivers for methods**: Chose `*DoublyLinkedList` receivers to enable modification of the list structure
 - **Return inserted nodes from append/prepend**: Decided to return `*Node` from insertion methods to enable efficient O(1) removal operations later
+- **Methods accept `Job` values, not `Node` pointers**: Keep internal node structure encapsulated - callers work with data, not implementation details
+- **Comprehensive test coverage**: Used subtests, helper functions, and edge case testing to ensure reliability
 
 ### What I learned:
 - Go's approach to circular dependency resolution through package restructuring
 - Pointer syntax (`*Node`) is essential for self-referential data structures - enables `nil` boundary conditions
 - Method receivers `func (dll *DoublyLinkedList)` are defined separately from struct definitions, unlike traditional OOP
 - Constructor functions aren't always necessary when zero values are appropriate (`&DoublyLinkedList{}` vs `NewDoublyLinkedList()`)
+- **Go testing idioms**: `got := value; got != expected` pattern for concise test assertions
+- **Subtest organization**: Using `t.Run()` for better test structure and readability
+- **Bidirectional linking complexity**: Maintaining both `next` and `prev` pointers requires careful ordering in implementation
 
 ### Next steps:
-- Implement remaining doubly linked list methods (Remove, TraverseForward/Backward, IsEmpty, etc.) for Q4 completion
+- Implement remaining doubly linked list methods (Remove, etc.)
+- Consider wrapping doubly linked list in a `JobQueue` struct for job-specific operations
 
 ## 📅 [2025-06-01]
 
