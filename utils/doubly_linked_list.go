@@ -24,11 +24,17 @@ func CreateNewDoubleLinkedList() *DoublyLinkedList {
 	}
 }
 
-// Returns true if doubly linked list is empty, false otherwise
+// Return true if doubly linked list is empty, false otherwise
 func (dll *DoublyLinkedList) IsEmpty() bool {
 	return dll.head == nil
 }
 
+// Return the size of the doubly linked list
+func (dll *DoublyLinkedList) GetSize() int {
+	return dll.size
+}
+
+// Add a new Job node to the end of the linked list
 func (dll *DoublyLinkedList) Append(job types.Job) *Node {
 	newNode := &Node{
 		value: job,
@@ -41,18 +47,32 @@ func (dll *DoublyLinkedList) Append(job types.Job) *Node {
 		return newNode
 	}
 
-	dll.tail.next = newNode
 	newNode.prev = dll.tail
+	dll.tail.next = newNode
 	dll.tail = newNode
 	dll.size += 1
 
 	return newNode
 }
 
-// func (dll *DoublyLinkedList) Prepend(job types.Job) *Node {
-// 	// Implementation
-// }
-//
-// func (dll *DoublyLinkedList) GetSize() int {
-// 	// Implementation
-// }
+// Add a new Job node to the beginning of the linked list
+func (dll *DoublyLinkedList) Prepend(job types.Job) *Node {
+
+	newNode := &Node{
+		value: job,
+	}
+
+	if dll.IsEmpty() {
+		dll.head = newNode
+		dll.tail = newNode
+		dll.size = 1
+		return newNode
+	}
+
+	newNode.next = dll.head
+	dll.head.prev = newNode
+	dll.head = newNode
+	dll.size += 1
+
+	return newNode
+}
