@@ -20,6 +20,30 @@ Go.
 ### What I learned:
 ### Next steps:
 
+## 📅 2025-08-02
+
+### What I worked on:
+- Resolved circular dependency issue by elevating Job struct to shared types package
+- Designed doubly linked list structure with proper pointer relationships
+- Learned Go method receiver syntax and struct organization patterns
+
+### Problems or blockers:
+- No current blockers
+
+### Decisions made and why:
+- **Created separate `types` package**: Moved Job struct from `server` to `types` package to prevent circular imports between `utils` and `server` packages
+- **Used pointer receivers for methods**: Chose `*DoublyLinkedList` receivers to enable modification of the list structure
+- **Return inserted nodes from append/prepend**: Decided to return `*Node` from insertion methods to enable efficient O(1) removal operations later
+
+### What I learned:
+- Go's approach to circular dependency resolution through package restructuring
+- Pointer syntax (`*Node`) is essential for self-referential data structures - enables `nil` boundary conditions
+- Method receivers `func (dll *DoublyLinkedList)` are defined separately from struct definitions, unlike traditional OOP
+- Constructor functions aren't always necessary when zero values are appropriate (`&DoublyLinkedList{}` vs `NewDoublyLinkedList()`)
+
+### Next steps:
+- Implement remaining doubly linked list methods (Remove, TraverseForward/Backward, IsEmpty, etc.) for Q4 completion
+
 ## 📅 [2025-06-01]
 
 ### What I worked on:
