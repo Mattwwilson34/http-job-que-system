@@ -15,3 +15,23 @@ type DoublyLinkedList struct {
 	tail *Node // Points to last node, or nil if empty
 	size int
 }
+
+func CreateNewDoubleLinkedList() *DoublyLinkedList {
+	return &DoublyLinkedList{
+		head: nil,
+		tail: nil,
+		size: 0,
+	}
+}
+
+func (dll *DoublyLinkedList) Append(job types.Job) *Node {
+	// Implementation
+}
+
+func (dll *DoublyLinkedList) Prepend(job types.Job) *Node {
+	// Implementation
+}
+
+func (dll *DoublyLinkedList) GetSize() int {
+	// Implementation
+}
