@@ -34,6 +34,14 @@ func (dll *DoublyLinkedList) GetSize() int {
 	return dll.size
 }
 
+// Return the value of the head of list or nil if list is empty
+func (dll *DoublyLinkedList) GetHead() *types.Job {
+	if dll.IsEmpty() {
+		return nil
+	}
+	return &dll.head.value
+}
+
 // Add a new Job node to the end of the linked list
 func (dll *DoublyLinkedList) Append(job types.Job) *Node {
 	newNode := &Node{
