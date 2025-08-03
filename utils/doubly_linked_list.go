@@ -76,3 +76,81 @@ func (dll *DoublyLinkedList) Prepend(job types.Job) *Node {
 
 	return newNode
 }
+
+// Remove a Job node from the tail of the double linked list and return it
+func (dll *DoublyLinkedList) RemoveLast() *Node {
+
+	if dll.IsEmpty() {
+		return nil
+	}
+
+	// Single node list
+	if dll.head == dll.tail {
+		headNode := dll.head
+
+		// Clean up links
+		headNode.next = nil
+		headNode.prev = nil
+
+		// Reset list
+		dll.head = nil
+		dll.tail = nil
+		dll.size = 0
+
+		return headNode
+	}
+
+	// Create new tail node
+	secondToLastNode := dll.tail.prev
+	secondToLastNode.next = nil
+
+	// Clean up links
+	tailNode := dll.tail
+	tailNode.next = nil
+	tailNode.prev = nil
+
+	// Update list
+	dll.tail = secondToLastNode
+	dll.size -= 1
+
+	return tailNode
+}
+
+// Remove a Job node from the head of the double linked list and return it
+func (dll *DoublyLinkedList) RemoveFirst() *Node {
+
+	if dll.IsEmpty() {
+		return nil
+	}
+
+	// Single node list
+	if dll.head == dll.tail {
+		headNode := dll.head
+
+		// Clean up links
+		headNode.next = nil
+		headNode.prev = nil
+
+		// Reset list
+		dll.head = nil
+		dll.tail = nil
+		dll.size = 0
+
+		return headNode
+	}
+
+	// Create new head node
+	secondListNode := dll.head.next
+	secondListNode.prev = nil
+
+	// Clean up links
+	headNode := dll.head
+	headNode.next = nil
+	headNode.prev = nil
+
+	// Reset list
+	dll.head = secondListNode
+	dll.size -= 1
+
+	return headNode
+}
