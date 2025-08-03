@@ -496,3 +496,402 @@ func TestPrependEdgeCases(t *testing.T) {
 		}
 	})
 }
+
+func TestRemoveFirst(t *testing.T) {
+	t.Run("remove from empty list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+
+		// Verify initial empty state
+		if !dll.IsEmpty() || dll.size != 0 {
+			t.Fatal("list should start empty")
+		}
+
+		// Remove from empty list
+		node := dll.RemoveFirst()
+
+		// Should return nil
+		if node != nil {
+			t.Errorf("RemoveFirst() on empty list = %v, want nil", node)
+		}
+
+		// List should remain empty
+		if !dll.IsEmpty() || dll.size != 0 {
+			t.Error("list should remain empty after removing from empty list")
+		}
+
+		if dll.head != nil || dll.tail != nil {
+			t.Error("head and tail should remain nil after removing from empty list")
+		}
+	})
+
+	t.Run("remove from single node list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+		job := createTestJob("1", "single_job")
+		dll.Append(job)
+
+		// Verify single node state
+		if dll.size != 1 || dll.head != dll.tail {
+			t.Fatal("list should have single node")
+		}
+
+		// Remove the single node
+		node := dll.RemoveFirst()
+
+		// Should return the node
+		if node == nil {
+			t.Fatal("RemoveFirst() should return the node, got nil")
+		}
+
+		// Verify returned node content
+		if got := node.value.Id; got != job.Id {
+			t.Errorf("returned node ID = %s, want %s", got, job.Id)
+		}
+
+		// Verify pointer cleanup on returned node
+		if node.next != nil || node.prev != nil {
+			t.Error("returned node should have clean pointers (next=nil, prev=nil)")
+		}
+
+		// Verify list is now empty
+		if !dll.IsEmpty() || dll.size != 0 {
+			t.Errorf("list should be empty after single node removal, size=%d", dll.size)
+		}
+
+		// Verify head and tail are reset
+		if dll.head != nil || dll.tail != nil {
+			t.Error("head and tail should be nil after single node removal")
+		}
+	})
+
+	t.Run("remove from multi node list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+		jobs := []types.Job{
+			createTestJob("1", "job_1"),
+			createTestJob("2", "job_2"),
+			createTestJob("3", "job_3"),
+		}
+
+		// Build list: [job_1] ↔ [job_2] ↔ [job_3]
+		for _, job := range jobs {
+			dll.Append(job)
+		}
+
+		// Store original head and second node for verification
+		originalHead := dll.head
+		originalSecond := dll.head.next
+
+		// Remove first node
+		node := dll.RemoveFirst()
+
+		// Verify returned node
+		if node == nil {
+			t.Fatal("RemoveFirst() should return the node, got nil")
+		}
+
+		if got := node.value.Id; got != jobs[0].Id {
+			t.Errorf("returned node ID = %s, want %s", got, jobs[0].Id)
+		}
+
+		// Verify pointer cleanup on returned node
+		if node.next != nil || node.prev != nil {
+			t.Error("returned node should have clean pointers (next=nil, prev=nil)")
+		}
+
+		// Verify returned node is the original head
+		if node != originalHead {
+			t.Error("returned node should be the original head node")
+		}
+
+		// Verify list state
+		if dll.size != 2 {
+			t.Errorf("list size = %d, want 2", dll.size)
+		}
+
+		// Verify new head is the original second node
+		if dll.head != originalSecond {
+			t.Error("new head should be the original second node")
+		}
+
+		// Verify new head content
+		if got := dll.head.value.Id; got != jobs[1].Id {
+			t.Errorf("new head ID = %s, want %s", got, jobs[1].Id)
+		}
+
+		// Verify new head has clean prev pointer
+		if dll.head.prev != nil {
+			t.Error("new head prev should be nil")
+		}
+
+		// Verify tail unchanged
+		if got := dll.tail.value.Id; got != jobs[2].Id {
+			t.Errorf("tail should remain unchanged, got ID %s, want %s", got, jobs[2].Id)
+		}
+
+		// Verify bidirectional linking integrity
+		if dll.head.next != dll.tail {
+			t.Error("head.next should point to tail")
+		}
+
+		if dll.tail.prev != dll.head {
+			t.Error("tail.prev should point to head")
+		}
+	})
+}
+
+func TestRemoveLast(t *testing.T) {
+	t.Run("remove from empty list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+
+		// Verify initial empty state
+		if !dll.IsEmpty() || dll.size != 0 {
+			t.Fatal("list should start empty")
+		}
+
+		// Remove from empty list
+		node := dll.RemoveLast()
+
+		// Should return nil
+		if node != nil {
+			t.Errorf("RemoveLast() on empty list = %v, want nil", node)
+		}
+
+		// List should remain empty
+		if !dll.IsEmpty() || dll.size != 0 {
+			t.Error("list should remain empty after removing from empty list")
+		}
+
+		if dll.head != nil || dll.tail != nil {
+			t.Error("head and tail should remain nil after removing from empty list")
+		}
+	})
+
+	t.Run("remove from single node list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+		job := createTestJob("1", "single_job")
+		dll.Append(job)
+
+		// Verify single node state
+		if dll.size != 1 || dll.head != dll.tail {
+			t.Fatal("list should have single node")
+		}
+
+		// Remove the single node
+		node := dll.RemoveLast()
+
+		// Should return the node
+		if node == nil {
+			t.Fatal("RemoveLast() should return the node, got nil")
+		}
+
+		// Verify returned node content
+		if got := node.value.Id; got != job.Id {
+			t.Errorf("returned node ID = %s, want %s", got, job.Id)
+		}
+
+		// Verify pointer cleanup on returned node
+		if node.next != nil || node.prev != nil {
+			t.Error("returned node should have clean pointers (next=nil, prev=nil)")
+		}
+
+		// Verify list is now empty
+		if !dll.IsEmpty() || dll.size != 0 {
+			t.Errorf("list should be empty after single node removal, size=%d", dll.size)
+		}
+
+		// Verify head and tail are reset
+		if dll.head != nil || dll.tail != nil {
+			t.Error("head and tail should be nil after single node removal")
+		}
+	})
+
+	t.Run("remove from multi node list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+		jobs := []types.Job{
+			createTestJob("1", "job_1"),
+			createTestJob("2", "job_2"),
+			createTestJob("3", "job_3"),
+		}
+
+		// Build list: [job_1] ↔ [job_2] ↔ [job_3]
+		for _, job := range jobs {
+			dll.Append(job)
+		}
+
+		// Store original tail and second-to-last node for verification
+		originalTail := dll.tail
+		originalSecondLast := dll.tail.prev
+
+		// Remove last node
+		node := dll.RemoveLast()
+
+		// Verify returned node
+		if node == nil {
+			t.Fatal("RemoveLast() should return the node, got nil")
+		}
+
+		if got := node.value.Id; got != jobs[2].Id {
+			t.Errorf("returned node ID = %s, want %s", got, jobs[2].Id)
+		}
+
+		// Verify pointer cleanup on returned node
+		if node.next != nil || node.prev != nil {
+			t.Error("returned node should have clean pointers (next=nil, prev=nil)")
+		}
+
+		// Verify returned node is the original tail
+		if node != originalTail {
+			t.Error("returned node should be the original tail node")
+		}
+
+		// Verify list state
+		if dll.size != 2 {
+			t.Errorf("list size = %d, want 2", dll.size)
+		}
+
+		// Verify new tail is the original second-to-last node
+		if dll.tail != originalSecondLast {
+			t.Error("new tail should be the original second-to-last node")
+		}
+
+		// Verify new tail content
+		if got := dll.tail.value.Id; got != jobs[1].Id {
+			t.Errorf("new tail ID = %s, want %s", got, jobs[1].Id)
+		}
+
+		// Verify new tail has clean next pointer
+		if dll.tail.next != nil {
+			t.Error("new tail next should be nil")
+		}
+
+		// Verify head unchanged
+		if got := dll.head.value.Id; got != jobs[0].Id {
+			t.Errorf("head should remain unchanged, got ID %s, want %s", got, jobs[0].Id)
+		}
+
+		// Verify bidirectional linking integrity
+		if dll.head.next != dll.tail {
+			t.Error("head.next should point to tail")
+		}
+
+		if dll.tail.prev != dll.head {
+			t.Error("tail.prev should point to head")
+		}
+	})
+}
+
+func TestRemoveConsistency(t *testing.T) {
+	t.Run("single node removal consistency", func(t *testing.T) {
+		// Test that RemoveFirst and RemoveLast behave identically on single-node lists
+		job := createTestJob("1", "test_job")
+
+		// Test RemoveFirst on single node
+		dll1 := CreateNewDoubleLinkedList()
+		dll1.Append(job)
+		node1 := dll1.RemoveFirst()
+
+		// Test RemoveLast on single node
+		dll2 := CreateNewDoubleLinkedList()
+		dll2.Append(job)
+		node2 := dll2.RemoveLast()
+
+		// Both should return equivalent nodes (same content, clean pointers)
+		if node1 == nil || node2 == nil {
+			t.Fatal("both methods should return nodes for single-node removal")
+		}
+
+		if node1.value.Id != node2.value.Id {
+			t.Error("both methods should return nodes with same content")
+		}
+
+		if node1.next != nil || node1.prev != nil || node2.next != nil || node2.prev != nil {
+			t.Error("both returned nodes should have clean pointers")
+		}
+
+		// Both lists should be in identical empty state
+		if dll1.size != dll2.size || dll1.size != 0 {
+			t.Error("both lists should have same empty size")
+		}
+
+		if dll1.head != dll2.head || dll1.head != nil {
+			t.Error("both lists should have nil head")
+		}
+
+		if dll1.tail != dll2.tail || dll1.tail != nil {
+			t.Error("both lists should have nil tail")
+		}
+	})
+
+	t.Run("sequential operations on empty list", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+
+		// Add single node and remove it
+		job := createTestJob("1", "temp_job")
+		dll.Append(job)
+		first := dll.RemoveFirst()
+
+		// Verify first removal worked
+		if first == nil || !dll.IsEmpty() {
+			t.Fatal("first removal should work and leave empty list")
+		}
+
+		// Try removing from now-empty list
+		second := dll.RemoveLast()
+
+		// Should handle empty list gracefully
+		if second != nil {
+			t.Error("removing from empty list should return nil")
+		}
+
+		if !dll.IsEmpty() {
+			t.Error("list should remain empty")
+		}
+	})
+}
+
+func TestRemovePointerIntegrity(t *testing.T) {
+	t.Run("removed node isolation", func(t *testing.T) {
+		dll := CreateNewDoubleLinkedList()
+		jobs := []types.Job{
+			createTestJob("1", "job_1"),
+			createTestJob("2", "job_2"),
+			createTestJob("3", "job_3"),
+		}
+
+		for _, job := range jobs {
+			dll.Append(job)
+		}
+
+		// Remove first node
+		removedFirst := dll.RemoveFirst()
+
+		// Remove last node
+		removedLast := dll.RemoveLast()
+
+		// Verify removed nodes are completely isolated
+		if removedFirst.next != nil || removedFirst.prev != nil {
+			t.Error("removed first node should have no connections")
+		}
+
+		if removedLast.next != nil || removedLast.prev != nil {
+			t.Error("removed last node should have no connections")
+		}
+
+		// Verify remaining list is intact
+		if dll.size != 1 {
+			t.Errorf("remaining list size = %d, want 1", dll.size)
+		}
+
+		if dll.head != dll.tail {
+			t.Error("single remaining node should be both head and tail")
+		}
+
+		if dll.head.next != nil || dll.head.prev != nil {
+			t.Error("remaining single node should have clean pointers")
+		}
+
+		// Verify content of remaining node
+		if got := dll.head.value.Id; got != jobs[1].Id {
+			t.Errorf("remaining node ID = %s, want %s", got, jobs[1].Id)
+		}
+	})
+}
